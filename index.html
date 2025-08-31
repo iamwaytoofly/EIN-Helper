@@ -4,8 +4,9 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>EIN Helper (Vanilla JS)</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <!-- pdf-lib from CDN -->
+  <link rel="stylesheet" href="./styles.css"/>
+
+  <!-- pdf-lib from CDN for in-browser PDF editing -->
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
 <body>
@@ -28,6 +29,8 @@
     <main id="view"></main>
   </div>
 
-  <script src="app.js" type="module"></script>
+  <!-- App script last so DOM is ready -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
+
