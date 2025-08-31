@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>EIN Helper (Vanilla JS)</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <!-- pdf-lib from CDN -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>EIN Helper</h1>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="helper" id="progressText">0% ready</div>
+    </header>
+
+    <nav class="tabs">
+      <a href="#step1">Basics</a>
+      <a href="#step2">Responsible</a>
+      <a href="#step3">Address</a>
+      <a href="#step4">Details</a>
+      <a href="#review">Review</a>
+      <a href="#export">Export</a>
+    </nav>
+
+    <main id="view"></main>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
