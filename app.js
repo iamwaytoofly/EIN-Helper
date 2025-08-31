@@ -1,4 +1,10 @@
-// Minimal hash router and localStorage-backed state
+// EIN Helper (Vanilla JS) - Drop-in app.js
+// - Hash router (#step1, #review, #export)
+// - localStorage persistence
+// - Modern UI polish (progress pulse)
+// - pdf-lib export using ./ss4.pdf
+
+// Routes
 const routes = {
   '#step1': renderStep1,
   '#step2': renderStep2,
@@ -8,6 +14,7 @@ const routes = {
   '#export': renderExport,
 };
 
+// State
 const stateKey = 'ein_answers_v1';
 const defaultAnswers = {
   entityType: '',
@@ -30,7 +37,7 @@ const defaultAnswers = {
   exciseSpecial: { heavyVehicle:false, gambling:false, atf:false, quarterlyExcise:false },
 };
 
-// Expose for PDF step
+// Hydrate global for PDF step access
 window.answers = load();
 
 function load() {
@@ -44,18 +51,8 @@ function save(partial) {
   localStorage.setItem(stateKey, JSON.stringify(window.answers));
   computeProgress();
 }
-function computeProgress() {
-  const a = window.answers;
-  const fields = [
-    a.entityType, a.reason, a.responsibleName, a.legalName, a.address, a.city, a.state, a.zip,
-    a.formationState, a.startDate, a.industry, a.employeesThisYear
-  ];
-  const filled = fields.filter(Boolean).length;
-  const pct = Math.round((filled / fields.length) * 100);
-  document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('progressText').textContent = pct + '% ready';
-}
 
+// UI helpers
 function render(root, html) { root.innerHTML = html; }
 function control(label, example, inner) {
   return `
@@ -66,7 +63,31 @@ function control(label, example, inner) {
   </div>`;
 }
 
-// Step views
+// Progress pulse animation
+function pulse(el){
+  if (!el || !el.animate) return;
+  el.animate(
+    [{ transform:'scale(1)' },{ transform:'scale(1.02)' },{ transform:'scale(1)' }],
+    { duration:280, easing:'cubic-bezier(.2,.8,.2,1)' }
+  );
+}
+function computeProgress(){
+  const a = window.answers;
+  const fields = [
+    a.entityType, a.reason, a.responsibleName, a.legalName,
+    a.address, a.city, a.state, a.zip,
+    a.formationState, a.startDate, a.industry, a.employeesThisYear
+  ];
+  const filled = fields.filter(Boolean).length;
+  const pct = Math.round((filled / fields.length) * 100);
+  const bar = document.getElementById('progressBar');
+  const text = document.getElementById('progressText');
+  if (bar) bar.style.width = pct + '%';
+  if (text) text.textContent = pct + '% ready';
+  pulse(bar);
+}
+
+// Steps
 function renderStep1(root) {
   render(root, `
     ${control('What kind of business is this legally?', 'Single‑member LLC', `
@@ -249,22 +270,25 @@ function renderExport(root) {
   document.getElementById('downloadBtn').onclick = downloadPDF;
 }
 
-// Button handler for the Export step (same folder as index.html)
+// PDF export using pdf-lib CDN and local ./ss4.pdf
 async function downloadPDF() {
-  // 1) Load the blank SS-4 from the root folder (next to index.html)
-  const existingPdfBytes = await fetch('ss4.pdf').then(r => r.arrayBuffer());
+  // 1) Load the blank SS-4 from the root (next to index.html)
+  const existingPdfBytes = await fetch('ss4.pdf').then(r => {
+    if (!r.ok) throw new Error('Could not load ss4.pdf');
+    return r.arrayBuffer();
+  });
 
-  // 2) Use pdf-lib from the CDN (available on window.PDFLib)
+  // 2) Use pdf-lib from the global PDFLib (loaded in index.html)
   const { PDFDocument, StandardFonts } = window['PDFLib'];
 
   // 3) Load and edit the PDF
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const page = pdfDoc.getPages();                 // single PDFPage
+  const page = pdfDoc.getPages(); // single PDFPage
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   const draw = (text, x, y) => page.drawText(text || '', { x, y, size: 10, font });
 
-  // Example coordinates (adjust as needed for your SS-4 template)
+  // Field mapping (coords approximate; adjust for your SS-4 template)
   const a = window.answers;
   draw(a.legalName || '', 80, 695);
   draw(a.dbaName || '', 80, 677);
@@ -277,9 +301,9 @@ async function downloadPDF() {
   draw(a.industry || '', 120, 420);
   draw(a.phone || '', 470, 565);
 
-  // 4) Save to bytes and download as Blob
+  // 4) Save and download
   const bytes = await pdfDoc.save();                 // Uint8Array
-  const blob = await new Response(bytes).blob();     // Blob
+  const blob = await new Response(bytes).blob();     // Blob from Uint8Array
   const blobUrl = URL.createObjectURL(blob);
 
   const link = document.createElement('a');
