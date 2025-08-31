@@ -1,4 +1,4 @@
-// Minimal SPA router using hash routes (#step1, #review, #export)
+// Minimal hash router and localStorage-backed state
 const routes = {
   '#step1': renderStep1,
   '#step2': renderStep2,
@@ -7,8 +7,8 @@ const routes = {
   '#review': renderReview,
   '#export': renderExport,
 };
-const stateKey = 'ein_answers_v1';
 
+const stateKey = 'ein_answers_v1';
 const defaultAnswers = {
   entityType: '',
   reason: '',
@@ -27,10 +27,11 @@ const defaultAnswers = {
   industry: '',
   employeesThisYear: '',
   firstPayrollMonth: '',
-  exciseSpecial: { heavyVehicle:false, gambling:false, atf:false, quarterlyExcise:false }
+  exciseSpecial: { heavyVehicle:false, gambling:false, atf:false, quarterlyExcise:false },
 };
 
-let answers = load();
+// Expose for PDF step
+window.answers = load();
 
 function load() {
   try {
@@ -39,15 +40,15 @@ function load() {
   } catch { return { ...defaultAnswers }; }
 }
 function save(partial) {
-  answers = { ...answers, ...partial };
-  localStorage.setItem(stateKey, JSON.stringify(answers));
+  window.answers = { ...window.answers, ...partial };
+  localStorage.setItem(stateKey, JSON.stringify(window.answers));
   computeProgress();
 }
 function computeProgress() {
+  const a = window.answers;
   const fields = [
-    answers.entityType, answers.reason, answers.responsibleName, answers.legalName,
-    answers.address, answers.city, answers.state, answers.zip, answers.formationState,
-    answers.startDate, answers.industry, answers.employeesThisYear
+    a.entityType, a.reason, a.responsibleName, a.legalName, a.address, a.city, a.state, a.zip,
+    a.formationState, a.startDate, a.industry, a.employeesThisYear
   ];
   const filled = fields.filter(Boolean).length;
   const pct = Math.round((filled / fields.length) * 100);
@@ -65,6 +66,7 @@ function control(label, example, inner) {
   </div>`;
 }
 
+// Step views
 function renderStep1(root) {
   render(root, `
     ${control('What kind of business is this legally?', 'Single‑member LLC', `
@@ -100,10 +102,12 @@ function renderStep1(root) {
       <a class="btn" href="#step2">Next</a>
     </div>
   `);
-  document.getElementById('entityType').value = answers.entityType;
-  document.getElementById('reason').value = answers.reason;
-  document.getElementById('legalName').value = answers.legalName;
-  document.getElementById('dbaName').value = answers.dbaName;
+
+  document.getElementById('entityType').value = window.answers.entityType;
+  document.getElementById('reason').value = window.answers.reason;
+  document.getElementById('legalName').value = window.answers.legalName;
+  document.getElementById('dbaName').value = window.answers.dbaName;
+
   document.getElementById('entityType').onchange = e => save({ entityType: e.target.value });
   document.getElementById('reason').onchange = e => save({ reason: e.target.value });
   document.getElementById('legalName').oninput = e => save({ legalName: e.target.value });
@@ -121,8 +125,10 @@ function renderStep2(root) {
       <a class="btn" href="#step3">Next</a>
     </div>
   `);
-  document.getElementById('responsibleName').value = answers.responsibleName;
-  document.getElementById('responsibleSSN_ITIN').value = answers.responsibleSSN_ITIN;
+
+  document.getElementById('responsibleName').value = window.answers.responsibleName;
+  document.getElementById('responsibleSSN_ITIN').value = window.answers.responsibleSSN_ITIN;
+
   document.getElementById('responsibleName').oninput = e => save({ responsibleName: e.target.value });
   document.getElementById('responsibleSSN_ITIN').oninput = e => save({ responsibleSSN_ITIN: e.target.value });
 }
@@ -146,8 +152,9 @@ function renderStep3(root) {
       <a class="btn" href="#step4">Next</a>
     </div>
   `);
+
   ['address','city','state','zip','phone','email'].forEach(id=>{
-    document.getElementById(id).value = answers[id] || '';
+    document.getElementById(id).value = window.answers[id] || '';
     document.getElementById(id).oninput = e => save({ [id]: e.target.value });
   });
 }
@@ -180,11 +187,12 @@ function renderStep4(root) {
       <a class="btn" href="#review">Review</a>
     </div>
   `);
-  document.getElementById('formationState').value = answers.formationState;
-  document.getElementById('startDate').value = answers.startDate;
-  document.getElementById('industry').value = answers.industry;
-  document.getElementById('employeesThisYear').value = answers.employeesThisYear;
-  document.getElementById('firstPayrollMonth').value = answers.firstPayrollMonth;
+
+  document.getElementById('formationState').value = window.answers.formationState;
+  document.getElementById('startDate').value = window.answers.startDate;
+  document.getElementById('industry').value = window.answers.industry;
+  document.getElementById('employeesThisYear').value = window.answers.employeesThisYear;
+  document.getElementById('firstPayrollMonth').value = window.answers.firstPayrollMonth;
 
   document.getElementById('formationState').oninput = e => save({ formationState: e.target.value });
   document.getElementById('startDate').oninput = e => save({ startDate: e.target.value });
@@ -194,30 +202,31 @@ function renderStep4(root) {
 
   ['heavyVehicle','gambling','atf','quarterlyExcise'].forEach(key=>{
     const el = document.getElementById(key);
-    el.checked = !!answers.exciseSpecial[key];
-    el.onchange = e => save({ exciseSpecial: { ...answers.exciseSpecial, [key]: el.checked }});
+    el.checked = !!window.answers.exciseSpecial[key];
+    el.onchange = () => save({ exciseSpecial: { ...window.answers.exciseSpecial, [key]: el.checked }});
   });
 }
 
 function renderReview(root) {
+  const a = window.answers;
   render(root, `
     <div class="card">
       <h2>Paste Sheet</h2>
       <pre>
-Entity type: ${answers.entityType}
-Reason: ${answers.reason}
-Responsible party: ${answers.responsibleName} ${answers.responsibleSSN_ITIN ? '(SSN/ITIN ready)' : ''}
-Legal name: ${answers.legalName}
-DBA: ${answers.dbaName}
-Address: ${answers.address}, ${answers.city}, ${answers.state} ${answers.zip}
-Phone: ${answers.phone}
-Email: ${answers.email}
-Formation state: ${answers.formationState}
-Start date: ${answers.startDate}
-Industry: ${answers.industry}
-Employees this year: ${answers.employeesThisYear}
-First payroll month: ${answers.firstPayrollMonth}
-Special taxes: ${Object.entries(answers.exciseSpecial).filter(([,v])=>v).map(([k])=>k).join(', ') || 'None'}
+Entity type: ${a.entityType}
+Reason: ${a.reason}
+Responsible party: ${a.responsibleName} ${a.responsibleSSN_ITIN ? '(SSN/ITIN ready)' : ''}
+Legal name: ${a.legalName}
+DBA: ${a.dbaName}
+Address: ${a.address}, ${a.city}, ${a.state} ${a.zip}
+Phone: ${a.phone}
+Email: ${a.email}
+Formation state: ${a.formationState}
+Start date: ${a.startDate}
+Industry: ${a.industry}
+Employees this year: ${a.employeesThisYear}
+First payroll month: ${a.firstPayrollMonth}
+Special taxes: ${Object.entries(a.exciseSpecial).filter(([,v])=>v).map(([k])=>k).join(', ') || 'None'}
       </pre>
       <div class="helper">IRS Online EIN Assistant typically available 7:00 a.m.–10:00 p.m. ET, Mon–Fri.</div>
       <div class="row">
@@ -240,35 +249,45 @@ function renderExport(root) {
   document.getElementById('downloadBtn').onclick = downloadPDF;
 }
 
+// Button handler for the Export step (same folder as index.html)
 async function downloadPDF() {
-  const url = 'ss4.pdf'; // served from same folder or /ss4.pdf if under a server root
-  const existingPdfBytes = await fetch(url).then(r => r.arrayBuffer());
+  // 1) Load the blank SS-4 from the root folder (next to index.html)
+  const existingPdfBytes = await fetch('ss4.pdf').then(r => r.arrayBuffer());
 
+  // 2) Use pdf-lib from the CDN (available on window.PDFLib)
   const { PDFDocument, StandardFonts } = window['PDFLib'];
+
+  // 3) Load and edit the PDF
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const page = pdfDoc.getPages();
+  const page = pdfDoc.getPages();                 // single PDFPage
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   const draw = (text, x, y) => page.drawText(text || '', { x, y, size: 10, font });
 
-  draw(answers.legalName, 80, 695);
-  draw(answers.dbaName, 80, 677);
-  draw(answers.address, 80, 661);
-  draw(`${answers.city}, ${answers.state} ${answers.zip}`, 80, 645);
-  draw(answers.responsibleName, 340, 610);
-  draw(answers.responsibleSSN_ITIN, 470, 610);
-  draw((answers.reason || '').replaceAll('_',' '), 120, 515);
-  draw(answers.startDate, 470, 495);
-  draw(answers.industry, 120, 420);
-  draw(answers.phone, 470, 565);
+  // Example coordinates (adjust as needed for your SS-4 template)
+  const a = window.answers;
+  draw(a.legalName || '', 80, 695);
+  draw(a.dbaName || '', 80, 677);
+  draw(a.address || '', 80, 661);
+  draw(`${a.city || ''}, ${a.state || ''} ${a.zip || ''}`, 80, 645);
+  draw(a.responsibleName || '', 340, 610);
+  draw(a.responsibleSSN_ITIN || '', 470, 610);
+  draw((a.reason || '').replaceAll('_',' '), 120, 515);
+  draw(a.startDate || '', 470, 495);
+  draw(a.industry || '', 120, 420);
+  draw(a.phone || '', 470, 565);
 
-  const bytes = await pdfDoc.save(); // Uint8Array
-  const blob = await new Response(bytes).blob();
+  // 4) Save to bytes and download as Blob
+  const bytes = await pdfDoc.save();                 // Uint8Array
+  const blob = await new Response(bytes).blob();     // Blob
   const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = 'SS-4_prefilled.pdf';
-  a.click();
+
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = 'SS-4_prefilled.pdf';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(blobUrl);
 }
 
