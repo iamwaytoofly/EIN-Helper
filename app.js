@@ -1,10 +1,10 @@
-// EIN Helper (Vanilla JS) - Drop-in app.js
+// EIN Helper (Vanilla JS) - Completed app.js with suggested edits
 // - Hash router (#step1, #review, #export)
 // - localStorage persistence
 // - Modern UI polish (progress pulse)
 // - pdf-lib export using ./ss4.pdf
+// - Select elements wrapped in .select-wrap for dark backgrounds
 
-// Routes
 const routes = {
   '#step1': renderStep1,
   '#step2': renderStep2,
@@ -14,7 +14,6 @@ const routes = {
   '#export': renderExport,
 };
 
-// State
 const stateKey = 'ein_answers_v1';
 const defaultAnswers = {
   entityType: '',
@@ -52,7 +51,6 @@ function save(partial) {
   computeProgress();
 }
 
-// UI helpers
 function render(root, html) { root.innerHTML = html; }
 function control(label, example, inner) {
   return `
@@ -91,29 +89,33 @@ function computeProgress(){
 function renderStep1(root) {
   render(root, `
     ${control('What kind of business is this legally?', 'Single‑member LLC', `
-      <select id="entityType">
-        <option value="">Select...</option>
-        <option value="sole_prop">Sole proprietor</option>
-        <option value="llc_single">LLC (single‑member)</option>
-        <option value="llc_multi">LLC (multi‑member)</option>
-        <option value="partnership">Partnership</option>
-        <option value="corporation">Corporation</option>
-        <option value="s_corporation">S‑Corporation</option>
-        <option value="nonprofit">Nonprofit</option>
-        <option value="trust">Trust</option>
-        <option value="estate">Estate</option>
-        <option value="other">Other</option>
-      </select>
+      <div class="select-wrap">
+        <select id="entityType">
+          <option value="">Select...</option>
+          <option value="sole_prop">Sole proprietor</option>
+          <option value="llc_single">LLC (single‑member)</option>
+          <option value="llc_multi">LLC (multi‑member)</option>
+          <option value="partnership">Partnership</option>
+          <option value="corporation">Corporation</option>
+          <option value="s_corporation">S‑Corporation</option>
+          <option value="nonprofit">Nonprofit</option>
+          <option value="trust">Trust</option>
+          <option value="estate">Estate</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
     `)}
     ${control('Why do you need an EIN right now?', 'Starting a new business and opening a bank account', `
-      <select id="reason">
-        <option value="">Select...</option>
-        <option value="started_new_business">Starting a new business</option>
-        <option value="hired_employees">Hired employees</option>
-        <option value="banking">Opening a bank account</option>
-        <option value="compliance">Compliance</option>
-        <option value="changed_structure">Changed ownership/structure</option>
-      </select>
+      <div class="select-wrap">
+        <select id="reason">
+          <option value="">Select...</option>
+          <option value="started_new_business">Starting a new business</option>
+          <option value="hired_employees">Hired employees</option>
+          <option value="banking">Opening a bank account</option>
+          <option value="compliance">Compliance</option>
+          <option value="changed_structure">Changed ownership/structure</option>
+        </select>
+      </div>
     `)}
     ${control('What’s the legal name? Any trade name (DBA)?', 'Legal: Steel City Goods LLC; DBA: Steel City Goods', `
       <input id="legalName" placeholder="Legal name"/>
@@ -190,11 +192,13 @@ function renderStep4(root) {
       <input id="industry" placeholder="Industry / principal activity"/>
     `)}
     ${control('Will you pay any employees this year? If yes, when does payroll start?', 'Yes; first wages in October 2025', `
-      <select id="employeesThisYear">
-        <option value="">Select...</option>
-        <option value="yes">Yes</option>
-        <option value="no">No</option>
-      </select>
+      <div class="select-wrap">
+        <select id="employeesThisYear">
+          <option value="">Select...</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
       <input id="firstPayrollMonth" placeholder="First payroll month (e.g., 2025-10)"/>
     `)}
     ${control('Any of these special taxes apply?', 'No to all', `
@@ -325,3 +329,4 @@ function mount() {
 }
 window.addEventListener('hashchange', mount);
 window.addEventListener('DOMContentLoaded', mount);
+
